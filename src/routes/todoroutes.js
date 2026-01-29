@@ -22,15 +22,25 @@ router.post('/', (req, res) => {
 router.put("/:id",(req,res)=>{
     const {completed}=req.body;
     const {id}=req.params;
+    const {page}=req.query
 
-    const updateTodo=db.prepare(`UPDATE todos SET task=? , completed=? WHERE id=?`);
-    updateTodo.run(task,completed,id)
+    const updateTodo=db.prepare(`UPDATE todos SET completed=? WHERE id=?`);
+    updateTodo.run(completed,id)
     res.json({message:"Todo updated successfully"})
 
 
 })
 
-router.delete("/:id",(req,res)=>{})
+router.delete("/:id",(req,res)=>{
+    const {id}=req.params;
+    const user_id=req.userId;
+    const deleteTodo=db.prepare(`DELETE FROM todos WHERE id=? AND user_id=?`);
+    deleteTodo.run(id,user_id)
+    res.json({message:"Todo deleted successfully"})
+
+
+
+})
 
 
 export default router;
