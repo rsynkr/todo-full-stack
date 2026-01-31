@@ -3,21 +3,29 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from '../db.js';
 import { hash } from 'crypto';
-
+import prisma from '../prismaclient.js';
 const router = express.Router();
-router.post("/register",(req,res)=>{
+router.post("/register",async(req,res)=>{
     //we are recieving the jspn body and destructuring it
     const {username,password} = req.body;
     const hashedpasskey =bcrypt.hashSync(password,10);
    try{
-   
+    const user =await prisma.user.create({
+        data:{
+            username,
+            password:hashedpasskey
+        }
+    })
 
-    const insertuser=db.prepare(` INSERT INTO users (username,password) VALUES (?,?)`);
-    const result= insertuser.run(username,hashedpasskey);
+    
     const tododefaulttext="Hello welcome "
 
-    const todo=db.prepare(`INSERT INTO todos (user_id,task) VALUES (?,?)`);
-    todo.run(result.lastInsertRowid,tododefaulttext);
+    await prisma.todo.create({
+        data:{
+            task:tododefaulttext,
+            userId:user.id
+        }
+    })
 //why we create a token is to authincate the user cso thatw e know thwt the user is real
     const token = jwt.sign({id:result.lastInsertRowid},process.env.JWT_SECRET,{expiresIn:'1h'});
     res.json({token});//sending the token to the user
@@ -34,14 +42,16 @@ router.post("/register",(req,res)=>{
 
 
 
-router.post("/login",(req,res)=>{
+router.post("/login",async(req,res)=>{
     const {username,password}=req.body
     try{
 
 
-        const getuser=db.prepare(`SELECT * FROM users WHERE username=?`);
-        const user=getuser.get(username);
-
+        const user=await prisma.user.findUnique({
+            where:{
+                username:username
+            }
+        })
         if(!user){ return res.status(404).send({message:"user not found"})}
         const ispasswordvalid=bcrypt.compareSync(password,user.password);  
         if(!ispasswordvalid){ return res.status(401).send({message:"invalid password"})}
