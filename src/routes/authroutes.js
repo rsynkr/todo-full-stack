@@ -1,7 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import db from '../db.js';
+
 import { hash } from 'crypto';
 import prisma from '../prismaclient.js';
 const router = express.Router();
